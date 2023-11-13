@@ -33,6 +33,7 @@ box_int_h = 31; // [in y] speaker width
 box_t = 2.5; // box thickness
 box_bot_t = 1.5; // USB-C cable passes through
 
+usbc_pos_x = -12; // center of USB port
 usbc_w = 3.5;
 usbc_l = 9;
 usbc_pcb_t = 1.6+0.3;
@@ -41,6 +42,13 @@ dist_reel_center_to_bottom = 18;
 
 mounting_ring_d_opening = 5;
 mounting_ring_d_min = 4;
+
+rp_pin_pitch = 2.54;
+rp_pin_w = 0.9; // real: 0.64
+rp_pin_edge_to_back_pins = 21.6 + 0.2;
+rp_back_pin_count = 7;
+rp_side_pin_count = 9;
+rp_side_pin_sep = 2.54 * 6;
 
 // reel goes opposite USB port
 
@@ -89,7 +97,7 @@ module make_enclosure() {
         );
 
         // remove USB-C port out bottom
-        translate([-12, box_int_h/2 - usbc_pcb_t, -box_bot_t-1])
+        translate([usbc_pos_x, box_int_h/2 - usbc_pcb_t, -box_bot_t-1])
         cuboid(
             [usbc_l, usbc_w, 10],
             anchor = BOTTOM + BACK,
@@ -104,6 +112,29 @@ module make_enclosure() {
         fwd(box_int_h/2 + box_t) left(15) up(dist_reel_center_to_bottom)
         ycyl(d=reel_d, h=reel_h, anchor=FRONT);
 
+        // remove pins to secure RP2040-Zero board
+        // remove back pins (perpendicular to USB cord)
+        right(usbc_pos_x) {
+            up(rp_pin_edge_to_back_pins) xcopies(n=rp_back_pin_count, spacing=rp_pin_pitch) {
+                cuboid(
+                    [rp_pin_w, 100, rp_pin_w],
+                    anchor=FRONT
+                );
+            }
+        }
+        
+        // remove side pins (parallel to USB cord)
+        for (x = [1, -1]) {
+            right(usbc_pos_x + x*rp_side_pin_sep/2) {
+                up(rp_pin_edge_to_back_pins - ((rp_side_pin_count-1)*rp_pin_pitch)/2) zcopies(spacing=rp_pin_pitch, n=rp_side_pin_count) {
+                    cuboid(
+                        [rp_pin_w, 100, rp_pin_w],
+                        anchor=FRONT
+                    );
+                }
+            }
+        }
+        
 
     }
 
