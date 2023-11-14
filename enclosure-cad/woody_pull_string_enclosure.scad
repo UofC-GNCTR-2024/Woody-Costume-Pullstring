@@ -2,23 +2,24 @@ include <BOSL2/std.scad>
 
 
 reel_d = 32 + 1;
-reel_h = 14; // really probably about 9
+reel_h = 10 + 0.5; // really probably about 10
 
 reel_holder_t = 3; // rounded walls
 reel_holder_top_t = 2; // flat top
 
-
-reel_opening_d = 7; // "id"
+reel_opening_d = 10; // "id"
 reel_torus_d_min = 5;
+
+reel_ball_d = 7.5; // diameter of the ball that has to fit through everything
 
 speaker_depth = 16.5;
 speaker_w = 31;
 speaker_l = 70;
-speaker_screw_d = 3 + 0.2;
+speaker_screw_d = 2.6; // M3 thread-forming
 speaker_screw_sep_w = 24;
 speaker_screw_sep_l = 64;
 speaker_lip_t = 2.5; // lip around screw holes
-speaker_screw_l = 4; // length of screw going into plastic (= screw length - speaker thickness)
+speaker_screw_l = 5; // length of screw going into plastic (= screw length - speaker thickness)
 // Speaker noise part, rounded rect: 38x27
 
 amp_screw_sep = 10;
@@ -30,13 +31,15 @@ box_int_w = 70; // [in x] speaker length
 box_int_l = 60; // [in z] speaker depth + board_unit
 box_int_h = 31; // [in y] speaker width
 
-box_t = 2.5; // box thickness
+box_t = 2; // box thickness
 box_bot_t = 1.5; // USB-C cable passes through
 
 usbc_pos_x = -12; // center of USB port
 usbc_w = 3.5;
 usbc_l = 9;
-usbc_pcb_t = 1.6+0.3;
+usbc_pcb_t = 1.6+0.3 + 1.2;
+// reel goes opposite USB port
+// USB port points out the bottom
 
 dist_reel_center_to_bottom = 18;
 
@@ -44,17 +47,14 @@ mounting_ring_d_opening = 5;
 mounting_ring_d_min = 4;
 
 rp_pin_pitch = 2.54;
-rp_pin_w = 0.9; // real: 0.64
+rp_pin_w = 1; // real: 0.64
 rp_pin_edge_to_back_pins = 21.6 + 0.2;
 rp_back_pin_count = 7;
 rp_side_pin_count = 9;
 rp_side_pin_sep = 2.54 * 6;
 
-// reel goes opposite USB port
 
-// USB port points out the bottom
-
-$fn = 100;
+$fn = 80;
 
 make_enclosure(); // main
 // make_enclosure_inspection(); // convenient view for debugging
@@ -147,8 +147,8 @@ module make_enclosure() {
                 zcyl(d = 7, h=3, anchor=TOP);
 
                 // create a taper for nice printing
-                translate([box_int_w/2*x, box_int_h/2*y, box_int_l - 15])
-                zcyl(d = 1, h=1, anchor=TOP);
+                translate([box_int_w/2*x, box_int_h/2*y, box_int_l - 20])
+                zcyl(d = 1, h=1, anchor=TOP, $fn=8);
             }
 
             // remove hole
@@ -159,21 +159,38 @@ module make_enclosure() {
 
     // add torus for reel/cord
     for (incl_box_t = [0.5]) // can include '0' and/or '1' as well
-    right(box_int_w/2 + box_t*incl_box_t) up(dist_reel_center_to_bottom) yrot(90) yscale(0.5) torus(
+    right(box_int_w/2 + box_t*incl_box_t) up(dist_reel_center_to_bottom) yrot(90)
+    yscale(reel_ball_d/reel_opening_d)
+    torus(
         id = reel_opening_d,
         d_min = reel_torus_d_min,
     );
 
     // add reel holder
-    fwd(box_int_h/2 + box_t) left(15) up(dist_reel_center_to_bottom) difference() {
-        hull() {
-            ycyl(
-                d=reel_d + 2*reel_holder_t, h=reel_h,
-                anchor=FRONT,
-                rounding = 2
-            );
-            // down(dist_reel_center_to_bottom) ycyl(d=0.1, h=reel_h, anchor=FRONT, $fn=8); // would be good if it was in the air, for printing purposes
+    fwd(box_int_h/2) left(15) up(dist_reel_center_to_bottom) difference() {
+        union() {
+            hull() {
+                ycyl(
+                    d=reel_d + 2*reel_holder_t, h=reel_h+reel_holder_top_t,
+                    anchor=FRONT,
+                    rounding = 2
+                );
+                // down(dist_reel_center_to_bottom) ycyl(d=0.1, h=reel_h, anchor=FRONT, $fn=8); // would be good if it was in the air, for printing purposes
+            }
+
+            // add part for ball to slip through
+            right(reel_d/2+reel_holder_t) back(reel_h/2) {
+                //sphere(d = reel_ball_d+2*2, $fn=40);
+
+                yrot(90) torus(d_min=3.5, id=reel_ball_d-0.1);
+            }
         }
+
+        // constrain to within the box (but ensure interection with the box)
+        fwd(box_t/2) cuboid(
+            [100, 100, 100],
+            anchor=BACK
+        );
 
         // remove slit out
         cuboid(
@@ -182,8 +199,11 @@ module make_enclosure() {
         );
 
         // remove reel
-        ycyl(d=reel_d, h=reel_h - reel_holder_top_t, anchor=FRONT);
-    }
+        ycyl(d=reel_d, h=reel_h, anchor=FRONT);
 
+        // remove gap for reel ball
+        back(reel_h/2) xcyl(d=reel_ball_d, h=100, anchor=LEFT);
+
+    }
 }
 
