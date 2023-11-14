@@ -134,8 +134,6 @@ module make_enclosure() {
                 }
             }
         }
-        
-
     }
 
     // add corner pieces to screw in the speaker
@@ -181,8 +179,8 @@ module make_enclosure() {
             // add part for ball to slip through
             right(reel_d/2+reel_holder_t) back(reel_h/2) {
                 //sphere(d = reel_ball_d+2*2, $fn=40);
-
-                yrot(90) torus(d_min=3.5, id=reel_ball_d-0.1);
+                //yrot(90) torus(d_min=3.5, id=reel_ball_d-0.1); // unprintable
+                xcyl(d=reel_ball_d+2*3, h=3, rounding2=2);
             }
         }
 
