@@ -34,9 +34,9 @@ box_int_h = 31; // [in y] speaker width
 box_t = 2; // box thickness
 box_bot_t = 1.5; // USB-C cable passes through
 
-usbc_pos_x = -12; // center of USB port
-usbc_w = 3.5;
-usbc_l = 9;
+usbc_pos_x = -15; // center of USB port
+usbc_w = 3.5 + 0.3;
+usbc_l = 9 + 0.3;
 usbc_pcb_t = 1.6+0.3 + 1.2;
 rp_actual_t = 1.6+0.3;
 // reel goes opposite USB port
@@ -72,18 +72,18 @@ limit_switch_screw_sep = 10;
 limit_switch_screw_d = 1.8;
 limit_switch_screw_head_d = 4;
 
-flexy_sheet_t = 1;
+flexy_sheet_t = 1.5;
 
 $fn = 80;
-// make_enclosure(); // main
+// back(50) make_enclosure(); // main
 // make_enclosure_inspection(RIGHT); // convenient view for debugging
 
 
 // right(50) make_flexy_sheet();
 // up(10) make_rp_top_block();
 
-// make_flexy_sheet();
-make_rp_top_block();
+yrot(90) make_flexy_sheet();
+// make_rp_top_block();
 
 // draw fake speaker
 if (0)
@@ -216,19 +216,12 @@ module make_enclosure() {
                 rounding=2, except=BOTTOM
             );
 
-            // add a spot to mount limit switch (floating)
-            // right(box_int_w/2)
-            // up(30)
-            // cuboid(
-            //     [20, 10, 20],
-            //     anchor=RIGHT+FRONT
-            // );
-
             // add a spot to mount limit switch (grounded)
-            right(box_int_w/2)
+            back(box_int_h/2)
+            right(box_int_w/2 - 6)
             cuboid(
-                [20, 10, 30 + 10],
-                anchor=RIGHT+FRONT+BOTTOM
+                [10, 7, 30 + 10],
+                anchor=RIGHT+BACK+BOTTOM
             );
 
         }
@@ -242,7 +235,7 @@ module make_enclosure() {
         
 
         // remove mounting holes and screwdriver hole on limit switch
-        right(box_int_w/2 - 15)
+        right(box_int_w/2 - 10)
         for (z=[1,-1]) up(30 + z * limit_switch_screw_sep/2) {
             ycyl(d=limit_switch_screw_d, h=box_int_h/2, anchor=FRONT);
 
@@ -260,7 +253,7 @@ module make_enclosure() {
         cuboid(
             [usbc_l, usbc_w, 10],
             anchor = BOTTOM + BACK,
-            rounding = usbc_w/2-0.01, except=[TOP,BOTTOM]
+            rounding = 1, except=[TOP,BOTTOM]
         );
 
         // remove hole for cord (edge and in flexy sheet)
